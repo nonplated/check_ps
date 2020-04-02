@@ -1,9 +1,11 @@
+#!/usr/bin/python3
 import sys
 import os
 
 
 path_file_ps = ''
 path_file_zip = ''
+# change your path to archive program
 path_absolute_7z = r"D:\Aplikacje\7-Zip\7z"
 
 
@@ -22,7 +24,7 @@ def get_values_from(file_content, line):
     lines = [l[len(line):].strip(':').split()
              for l in file_content
              if l[:len(line)] == line]
-    return lines[0] if lines else []
+    return lines[0] if lines else [] #return only first line (if found more)
 
 
 def get_page_dimensions(file_content):
@@ -60,21 +62,15 @@ if __name__ == "__main__":
         print('          check_ps.py [filename.ps]')
         sys.exit(0)
 
-
     print(f"Loading file: {path_file_ps}")
-
     file_content = read_file_as_list(path_file_ps)
 
-    # check that is finish marker at the end of file
+    # check that finish marker exists at the end of file
     marker_eof_exists = file_content[len(file_content)-2] == '%'+'%'+'EOF'
 
-    # get page dimensions
+    # new file name will have dimensions in mm (if found)
     dimensions = get_page_dimensions(file_content)
-
-    if dimensions:  # new file name will have dimensions in mm
-        path_file_zip = get_output_filename(path_file_ps, **dimensions)
-    else:
-        path_file_zip = f"{path_file_ps}.zip"
+    path_file_zip = get_output_filename(path_file_ps, **dimensions)
 
     if path_file_ps and path_file_zip and path_absolute_7z:
         if marker_eof_exists:
