@@ -33,6 +33,8 @@ def read_file_as_list(path_filename):
 
 
 def get_values_from(file_content, line):
+    '''Get values from content
+    '''
     lines = [l[len(line):].strip(':').split()
              for l in file_content
              if l[:len(line)] == line]
@@ -40,6 +42,8 @@ def get_values_from(file_content, line):
 
 
 def get_page_dimensions(file_content):
+    '''Get page size of post-script file in MM
+    '''
     values = get_values_from(file_content, r'%%PageBoundingBox:')
     if len(values) != 4:
         values = get_values_from(file_content, r'%%BoundingBox:')
@@ -54,6 +58,8 @@ def get_page_dimensions(file_content):
 
 
 def create_output_filename(path_file_ps, paper_format='', width_mm=0, height_mm=0):
+    '''Create file name for output file (zip)
+    '''
     if width_mm > 0 and height_mm > 0:
         filename = "{}_{}x{}mm_{}.zip".format(
             '.'.join(path_file_ps.split('.')[:-1]),
@@ -66,6 +72,8 @@ def create_output_filename(path_file_ps, paper_format='', width_mm=0, height_mm=
 
 
 def marker_eof_exists(file_content):
+    '''Check if marker EOF exists in file
+    '''
     return len([l for l in file_content if l.strip() == r'%%EOF']) == 1
 
 
@@ -81,11 +89,12 @@ def check_and_compress(path_file_ps):
     dimensions = get_page_dimensions(file_content)
     paper_format = get_paper_format(**dimensions)
     path_file_zip = create_output_filename(
-        args.path_file_ps, paper_format , **dimensions)
+        args.path_file_ps, paper_format, **dimensions)
 
     if path_file_ps:
         if marker_eof_exists(file_content):
-            print("[---] Page size is: {width_mm} * {height_mm} mm".format(**dimensions))
+            print(
+                "[---] Page size is: {width_mm} * {height_mm} mm".format(**dimensions))
             print('[---] Paper format: {}'.format(paper_format))
             print('[---] Compressing, wait a moment...')
             with zipfile.ZipFile(path_file_zip, 'w',
@@ -107,6 +116,7 @@ def check_and_compress(path_file_ps):
         print(f"Output file name: {path_file_zip}")
         sys.exit(1)
     print('[---] Done.')
+
 
 if __name__ == "__main__":
     print('Hello, this is a check post-script file compresser (made in 2019)')
