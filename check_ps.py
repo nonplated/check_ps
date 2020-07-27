@@ -6,11 +6,6 @@ from paper_format import get_paper_format
 import zipfile
 import zlib
 import argparse
-from config import zip_password
-
-
-path_file_ps = ''
-path_file_zip = ''
 
 
 def mark_file_as_invalid(path_filename, new_extension):
@@ -74,19 +69,24 @@ def marker_eof_exists(file_content):
     return len([l for l in file_content if l.strip() == r'%%EOF']) == 1
 
 
-def main(path_file_ps):
+def check_and_compress(path_file_ps):
+    '''Get content of PS file, check, compress, and save in zip file
+    '''
+    path_file_zip = ''
 
     print(f"[---] Loading file: {path_file_ps}")
     file_content = read_file_as_list(path_file_ps)
 
     # new file name will have dimensions in mm (if found)
     dimensions = get_page_dimensions(file_content)
+    paper_format = get_paper_format(**dimensions)
     path_file_zip = create_output_filename(
-        args.path_file_ps, get_paper_format(**dimensions), **dimensions)
+        args.path_file_ps, paper_format , **dimensions)
 
     if path_file_ps:
         if marker_eof_exists(file_content):
-            print('[---] The file is correct.')
+            print("[---] Page size is: {width_mm} * {height_mm} mm".format(**dimensions))
+            print('[---] Paper format: {}'.format(paper_format))
             print('[---] Compressing, wait a moment...')
             with zipfile.ZipFile(path_file_zip, 'w',
                                  compression=zipfile.ZIP_DEFLATED
@@ -106,7 +106,7 @@ def main(path_file_ps):
         print(f"PS file name: {path_file_ps}")
         print(f"Output file name: {path_file_zip}")
         sys.exit(1)
-
+    print('[---] Done.')
 
 if __name__ == "__main__":
     print('Hello, this is a check post-script file compresser (made in 2019)')
@@ -120,4 +120,4 @@ if __name__ == "__main__":
     if not os.path.isfile(args.path_file_ps):
         sys.exit(f"[ERROR] <> File not exist: {path_file_ps}", 1)
 
-    main(args.path_file_ps)
+    check_and_compress(args.path_file_ps)
