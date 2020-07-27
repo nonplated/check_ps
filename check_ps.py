@@ -3,22 +3,37 @@ import sys
 import os
 import math
 from paper_format import get_paper_format
+import zipfile
+import zlib
+import argparse
+from config import zip_password
+
 
 path_file_ps = ''
 path_file_zip = ''
 
-# change your path to archive program
-path_absolute_7z = r"D:\Aplikacje\7-Zip\7z"
-
 
 def mark_file_as_invalid(path_filename, new_extension):
+    '''Mark file as invalid -> change extension to ".invalid"
+    '''
     os.rename(path_filename, path_filename+new_extension)
 
 
 def read_file_as_list(path_filename):
     content = []
-    with open(path_filename) as file:
-        content = [line.rstrip('\n') for line in file]
+    try:
+        with open(path_filename, encoding='UTF-8') as file:
+            try:
+                content = [line.rstrip('\n') for line in file]
+            except UnicodeDecodeError:
+                sys.exit('ERROR: I cannot recognize encoding this file. Sorry')
+            except:
+                sys.exit('ERROR: I cannot read this file.')
+    except FileNotFoundError:
+        sys.exit('File not found.')
+    except:
+        sys.exit('Can''t open this file')
+
     return content
 
 
@@ -59,10 +74,9 @@ def marker_eof_exists(file_content):
     # return file_content[-2] == r'%%EOF'
     return len([l for l in file_content if l.strip() == r'%%EOF']) == 1
 
-
-if __name__ == "__main__":
+def main(path_file_ps, path_file_zip):
     print("Hello, now we will check post-script file (made in 2019)\n")
-    print(sys.argv)
+    #print(sys.argv)
     if len(sys.argv) > 1 and len(sys.argv[1]) > 0:
         path_file_ps = os.path.abspath(sys.argv[1])
         if not os.path.exists(path_file_ps):
@@ -72,7 +86,7 @@ if __name__ == "__main__":
         print('          check_ps.py [filename.ps]')
         sys.exit(0)
 
-    print(f"Loading file: {path_file_ps}")
+    print(f"[---] Loading file: {path_file_ps}")
     file_content = read_file_as_list(path_file_ps)
 
     # new file name will have dimensions in mm (if found)
@@ -80,20 +94,32 @@ if __name__ == "__main__":
     path_file_zip = create_output_filename(
         path_file_ps, get_paper_format(**dimensions), **dimensions)
 
-    if path_file_ps and path_file_zip and path_absolute_7z:
+    if path_file_ps:
         if marker_eof_exists(file_content):
-            print('File is correct.')
-            zip_exec_command = f"{path_absolute_7z} a \"{path_file_zip}\" \"{path_file_ps}\" -sdel"
-            # used options for 7z:
-            #    a      --- add files to archive
-            #    -sdel  --- delete source file after success compressing
-            os.system(zip_exec_command)
+            print('[---] The file is correct.')
+            print('[---] Compressing, wait a moment...')
+            with zipfile.ZipFile(path_file_zip, 'w',
+                                 compression= zipfile.ZIP_DEFLATED
+                                 ) as zip_file:
+                zip_file.write(
+                    path_file_ps,
+                    arcname= os.path.basename(path_file_ps))
+                zip_file.close()
+            if os.path.isfile(path_file_zip):
+                print('[---] Deleting old file ps')
+                os.remove(path_file_ps)
         else:
-            print('ERROR: No matching ending word. File PS may be corrupted.')
+            print('[ERROR] <> No matching ending word. File PS may be corrupted.')
             mark_file_as_invalid(path_file_ps, '.invalid')  # change file name
     else:
-        print('Incorrect file names. Please check.')
+        print('[ERROR] <> Incorrect file names. Please check.')
         print(f"PS file name: {path_file_ps}")
         print(f"Output file name: {path_file_zip}")
-        print(f"Path to 7z app: {path_absolute_7z}")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    #parser = argparse.ArgumentParser(
+    #    description='Hello, this is a check post-script file compresser (made in 2019)')
+
+    main(path_file_ps, path_file_zip)
