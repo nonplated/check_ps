@@ -24,6 +24,9 @@ def get_paper_format(width_mm=0, height_mm=0):
 
 
 if __name__ == "__main__":
+    '''
+        Run test if ran as main program
+    '''
     assert get_paper_format(210, 297) == 'A4'
     assert get_paper_format(212, 297) == 'A4E'
     assert get_paper_format(500, 700) == 'B2'
