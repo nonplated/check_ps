@@ -71,7 +71,6 @@ def create_output_filename(path_file_ps, paper_format='', width_mm=0, height_mm=
 
 
 def marker_eof_exists(file_content):
-    # return file_content[-2] == r'%%EOF'
     return len([l for l in file_content if l.strip() == r'%%EOF']) == 1
 
 
