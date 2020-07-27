@@ -74,17 +74,8 @@ def marker_eof_exists(file_content):
     # return file_content[-2] == r'%%EOF'
     return len([l for l in file_content if l.strip() == r'%%EOF']) == 1
 
-def main(path_file_ps, path_file_zip):
-    print("Hello, now we will check post-script file (made in 2019)\n")
-    #print(sys.argv)
-    if len(sys.argv) > 1 and len(sys.argv[1]) > 0:
-        path_file_ps = os.path.abspath(sys.argv[1])
-        if not os.path.exists(path_file_ps):
-            sys.exit(f"ERROR: File not exist: {path_file_ps}")
-    else:
-        print('Usage:                             ')
-        print('          check_ps.py [filename.ps]')
-        sys.exit(0)
+
+def main(path_file_ps):
 
     print(f"[---] Loading file: {path_file_ps}")
     file_content = read_file_as_list(path_file_ps)
@@ -92,18 +83,18 @@ def main(path_file_ps, path_file_zip):
     # new file name will have dimensions in mm (if found)
     dimensions = get_page_dimensions(file_content)
     path_file_zip = create_output_filename(
-        path_file_ps, get_paper_format(**dimensions), **dimensions)
+        args.path_file_ps, get_paper_format(**dimensions), **dimensions)
 
     if path_file_ps:
         if marker_eof_exists(file_content):
             print('[---] The file is correct.')
             print('[---] Compressing, wait a moment...')
             with zipfile.ZipFile(path_file_zip, 'w',
-                                 compression= zipfile.ZIP_DEFLATED
+                                 compression=zipfile.ZIP_DEFLATED
                                  ) as zip_file:
                 zip_file.write(
                     path_file_ps,
-                    arcname= os.path.basename(path_file_ps))
+                    arcname=os.path.basename(path_file_ps))
                 zip_file.close()
             if os.path.isfile(path_file_zip):
                 print('[---] Deleting old file ps')
@@ -119,7 +110,15 @@ def main(path_file_ps, path_file_zip):
 
 
 if __name__ == "__main__":
-    #parser = argparse.ArgumentParser(
-    #    description='Hello, this is a check post-script file compresser (made in 2019)')
+    print('Hello, this is a check post-script file compresser (made in 2019)')
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument(
+        'path_file_ps',
+        help='filename input postscript file (.PS)')
+    args = parser.parse_args()
 
-    main(path_file_ps, path_file_zip)
+    # check import file exists
+    if not os.path.isfile(args.path_file_ps):
+        sys.exit(f"[ERROR] <> File not exist: {path_file_ps}", 1)
+
+    main(args.path_file_ps)
