@@ -39,15 +39,16 @@ def read_file_as_list(path_filename):
 def get_values_from(file_content, line):
     '''Get values from content
     '''
-    lines = [l[len(line):].strip(':').split()
-             for l in file_content
-             if l[:len(line)] == line]
+    lines = [ln[len(line):].strip(':').split()
+             for ln in file_content
+             if ln[:len(line)] == line]
     return lines[0] if lines else []  # return only first line (if found more)
 
 
 def get_page_dimensions(file_content):
     '''Get page size of post-script file in MM
     '''
+    dimensions = {}
     values = get_values_from(file_content, r'%%PageBoundingBox:')
     if len(values) != 4:
         values = get_values_from(file_content, r'%%BoundingBox:')
@@ -55,10 +56,18 @@ def get_page_dimensions(file_content):
         return {}
     else:
         divider = 72 / 25.4  # 72 points / inch[mm]
-        return {
-            'width_mm': math.floor((int(values[2])-int(values[0])) / divider),
-            'height_mm': math.floor((int(values[3])-int(values[1])) / divider)
-        }
+        try:
+            dimensions = {
+                'width_mm': math.floor((int(values[2])-int(values[0])) / divider),
+                'height_mm': math.floor((int(values[3])-int(values[1])) / divider)
+            }
+        except ZeroDivisionError:
+            print('[-!-] Dividing by zero! Mission aborted.')
+            return {}
+        except ValueError:
+            print('[-!-] No integer values in: {} {} {} {}'.format(*values))
+            return {}
+    return dimensions
 
 
 def create_output_filename(path_file_ps, paper_format='', width_mm=0, height_mm=0):
