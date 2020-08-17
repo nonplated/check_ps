@@ -21,13 +21,17 @@ def read_file_as_list(path_filename):
             try:
                 content = [line.rstrip('\n') for line in file]
             except UnicodeDecodeError:
-                sys.exit('ERROR: I cannot recognize encoding this file. Sorry')
+                print('ERROR: I cannot recognize encoding this file. Sorry')
+                return None
             except:
-                sys.exit('ERROR: I cannot read this file.')
+                print('ERROR: I cannot read this file.')
+                return None
     except FileNotFoundError:
-        sys.exit('File not found.')
+        print('File not found.')
+        return None
     except:
-        sys.exit('Can''t open this file')
+        print('Can''t open this file')
+        return None
 
     return content
 
@@ -63,8 +67,8 @@ def create_output_filename(path_file_ps, paper_format='', width_mm=0, height_mm=
     if width_mm > 0 and height_mm > 0:
         filename = "{}_{}x{}mm_{}.zip".format(
             '.'.join(path_file_ps.split('.')[:-1]),
-            round(width_mm),
-            round(height_mm),
+            math.floor(width_mm),
+            math.floor(height_mm),
             paper_format or '')
     else:
         filename = f"{path_file_ps}.zip"
@@ -84,6 +88,8 @@ def check_and_compress(path_file_ps):
 
     print(f"[---] Loading file: {path_file_ps}")
     file_content = read_file_as_list(path_file_ps)
+    if file_content is None:
+        return False
 
     # new file name will have dimensions in mm (if found)
     dimensions = get_page_dimensions(file_content)
@@ -114,8 +120,8 @@ def check_and_compress(path_file_ps):
         print('[ERROR] <> Incorrect file names. Please check.')
         print(f"PS file name: {path_file_ps}")
         print(f"Output file name: {path_file_zip}")
-        sys.exit(1)
-    print('[---] Done.')
+        return False
+    return True
 
 
 if __name__ == "__main__":
@@ -128,6 +134,9 @@ if __name__ == "__main__":
 
     # check import file exists
     if not os.path.isfile(args.path_file_ps):
-        sys.exit(f"[ERROR] <> File not exist: {path_file_ps}", 1)
+        sys.exit(f"[ERROR] <> File not exist: {args.path_file_ps}", 1)
 
-    check_and_compress(args.path_file_ps)
+    if check_and_compress(args.path_file_ps):
+        print('[---] Done.')
+    else:
+        print('[-!-] CHECK ERRORS.')
